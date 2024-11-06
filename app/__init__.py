@@ -3,6 +3,9 @@ from .db import db, migrate
 from .models import task, goal
 import os
 
+from .routes.task_routes import tasks_bp
+
+
 def create_app(config=None):
     app = Flask(__name__)
 
@@ -16,6 +19,7 @@ def create_app(config=None):
 
     db.init_app(app)
     migrate.init_app(app, db)
+    app.register_blueprint(tasks_bp)
 
     # Register Blueprints here
 
