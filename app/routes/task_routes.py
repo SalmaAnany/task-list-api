@@ -1,13 +1,15 @@
 from datetime import datetime
-from http.client import responses
 
 from flask import request, Blueprint, make_response, abort, Response
 from sqlalchemy import asc, desc
 
 from app import db
 from app.models.task import Task
+from app.slack.slack_client import SlackClient
+from app.slack.slackmessage import SlackMessage
 
 tasks_bp = Blueprint("tasks_bp",__name__, url_prefix="/tasks")
+slack_client = SlackClient()
 
 @tasks_bp.post("")
 def create_task():
@@ -101,28 +103,34 @@ def delete_planet(task_id):
         "details": f'Task {task_id} "{task.title}" successfully deleted'
     }
 
-@tasks_bp.patch("/<task_id>/mark_complete")
-def mark_complete_on_an_incompleted_task(task_id):
-    validate_id(task_id)
-    query = db.select(Task).where(Task.id == task_id)
-    task = db.session.scalar(query)
+def change_task_status(task_id, is_completed):
+    task = Task.query.get(task_id)
     if task is None:
         response = {"message": f"Task {task_id} not found"}
         abort(make_response(response, 404))
-    task.completed_at = datetime.now()
-    db.session.commit()
-    updated_task = db.session.scalar(query)
-    return {"task": updated_task.to_dict()}
+
+    if is_completed:
+        completed_date = datetime.now()
+        task_text = f"Someone just completed the task '{task.title}'"
+    else:
+        completed_date = None
+        task_text = f"Someone just marked the task '{task.title}' incomplete"
+
+    notification_messages = SlackMessage("task-notifications", task_text)
+    notification_was_sent = slack_client.post_message(notification_messages)
+    if notification_was_sent:
+        Task.query.filter_by(id=task_id).update({Task.completed_at: completed_date})
+        db.session.commit()
+    return task
+
+@tasks_bp.patch("/<task_id>/mark_complete")
+def mark_completed_task(task_id):
+    validate_id(task_id)
+    task = change_task_status(task_id, True)
+    return make_response({"task": task.to_dict()}, 200)
 
 @tasks_bp.patch("/<task_id>/mark_incomplete")
 def mark_in_complete_task(task_id):
     validate_id(task_id)
-    query = db.select(Task).where(Task.id == task_id)
-    task = db.session.scalar(query)
-    if task is None:
-        response = {"message": f"{task_id} not found"}
-        abort(make_response(response, 404))
-    task.completed_at = None
-    db.session.commit()
-    updated_task = db.session.scalar(query)
-    return {"task": updated_task.to_dict()}
+    task = change_task_status(task_id, False)
+    return make_response({"task": task.to_dict()}, 200)
