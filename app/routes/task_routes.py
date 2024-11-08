@@ -88,7 +88,7 @@ def update_task(task_id):
     }
 
 @tasks_bp.delete("/<task_id>")
-def delete_planet(task_id):
+def delete_task(task_id):
     validate_id(task_id)
     query = db.select(Task).where(Task.id == task_id)
     task = db.session.scalar(query)

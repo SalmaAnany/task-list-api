@@ -2,6 +2,7 @@ from flask import Blueprint, make_response, abort, request
 
 from app import db
 from app.models.goal import Goal
+from app.models.task import Task
 
 goal_bp = Blueprint("goal_bp",__name__, url_prefix="/goals")
 
@@ -60,6 +61,35 @@ def get_one_goal(goal_id):
         abort(make_response(response,404))
     return {"goal": goal.to_dict()}
 
+@goal_bp.post("/<goal_id>/tasks")
+def set_one_goal_tasks(goal_id):
+    request_body = request.get_json()
+    goal_id_validation(goal_id)
+
+    goal = db.session.get(Goal, int(goal_id))
+    if not goal:
+        response = {"message": f"{goal_id} not found"}
+        abort(make_response(response, 404))
+
+    task_ids = request_body.get("task_ids", [])
+    if not task_ids:
+        abort(make_response({"message": "No task IDs provided"}, 400))
+
+
+    tasks = db.session.query(Task).filter(Task.id.in_(task_ids)).all()
+
+
+    if len(tasks) != len(task_ids):
+        abort(make_response({"message": "One or more tasks not found"}, 404))
+
+
+    for task in tasks:
+        task.goal = goal
+
+    db.session.commit()
+
+    return {"id": goal.id, "task_ids": [task.id for task in tasks]}, 200
+
 @goal_bp.put("/<goal_id>")
 def update_goal(goal_id):
     goal_id_validation(goal_id)
@@ -87,3 +117,14 @@ def delete_task(goal_id):
 
     db.session.delete(goal)
     db.session.commit()
+
+@goal_bp.get("/<goal_id>/tasks")
+def get_one_goal_tasks(goal_id):
+    goal_id_validation(goal_id)
+    query = db.select(Goal).where(Goal.id == goal_id)
+    goal = db.session.scalar(query)
+
+    if not goal:
+        response = {"message": f"{goal_id} not found"}
+        abort(make_response(response,404))
+    return {"tasks": goal.to_dict()["tasks"]}
