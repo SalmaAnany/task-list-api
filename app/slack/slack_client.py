@@ -1,6 +1,9 @@
 import os
+
 import requests
+
 from app.slack.slackmessage import SlackMessage
+
 
 class SlackClient:
     def __init__(self):
