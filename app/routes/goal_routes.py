@@ -46,8 +46,7 @@ def get_all_tasks():
         query = query.where(Goal.title.like(f"%{title_param}"))
 
     goals = db.session.scalars(query).all()
-    goals_response = [goal.to_dict() for goal in goals]
-    return goals_response
+    return [goal.to_dict() for goal in goals]
 
 
 def goal_id_validation(id):
