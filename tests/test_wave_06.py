@@ -46,7 +46,7 @@ def test_get_tasks_for_specific_goal_no_goal(client):
 
     # Assert
     assert response.status_code == 404
-    assert response_body == {"message": "1 not found"}
+    assert response_body == {'message': 'Goal 1 not found'}
 
 
 def test_get_tasks_for_specific_goal_no_tasks(client, one_goal):

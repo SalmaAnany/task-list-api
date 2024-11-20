@@ -45,7 +45,7 @@ def test_get_goal_not_found(client):
     response = client.get("/goals/1")
     response_body = response.get_json()
     assert response.status_code == 404
-    assert response_body == {"message": "1 not found"}
+    assert response_body == {'message': 'Goal 1 not found'}
 
 
 def test_create_goal(client):
@@ -92,7 +92,7 @@ def test_update_goal_not_found(client):
     # assertion 2 goes here
     # ---- Complete Assertions Here ----
     assert response.status_code == 404
-    assert response_body == {"details": "Goal 1 not found"}
+    assert response_body == {'message': 'Goal 1 not found'}
 
 
 def test_delete_goal(client, one_goal):
@@ -110,7 +110,7 @@ def test_delete_goal(client, one_goal):
     # Check that the goal was deleted
     response = client.get("/goals/1")
     assert response.status_code == 404
-    assert response.get_json() == {'message': '1 not found'}
+    assert response.get_json() == {'message': 'Goal 1 not found'}
     # *****************************************************************
     # **Complete test with assertion about response body***************
     # *****************************************************************
@@ -123,8 +123,8 @@ def test_delete_goal_not_found(client):
 
     # Assert
     assert response.status_code == 404
-    assert "details" in response_body
-    assert response_body == {'details': '1 not found.'}
+    assert "message" in response_body
+    assert response_body == {'message': 'Goal 1 not found'}
 
 
 def test_create_goal_missing_title(client):
