@@ -122,7 +122,8 @@ def change_task_status(task_id, is_completed):
         completed_date = None
         task_text = f"Someone just marked the task '{task.title}' incomplete"
 
-    notification_messages = SlackMessage("task-notifications", task_text)
+    CHANNEL_NAME = "task-notifications"
+    notification_messages = SlackMessage(CHANNEL_NAME, task_text)
     notification_was_sent = slack_client.post_message(notification_messages)
     if notification_was_sent:
         Task.query.filter_by(id=task_id).update({Task.completed_at: completed_date})
